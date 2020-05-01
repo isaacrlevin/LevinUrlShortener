@@ -1,0 +1,19 @@
+{
+  "$schema": "http://json.schemastore.org/proxies",
+  "proxies": {
+    "Domain Redirect": {
+      "disabled": false,
+      "matchCondition": {
+        "route": "/{*shortUrl}"
+      },
+      "backendUri": "http://localhost/api/UrlRedirect/{shortUrl}"
+    },
+    "Api": {
+      "disabled": false,
+      "matchCondition": {
+        "route": "/api/{*path}"
+      },
+      "backendUri": "http://localhost/api/{path}"
+    }
+  }
+}

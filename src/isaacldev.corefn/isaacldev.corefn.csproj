@@ -1,0 +1,36 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<TargetFramework>netcoreapp3.1</TargetFramework>
+		<AzureFunctionsVersion>v3</AzureFunctionsVersion>
+	</PropertyGroup>
+	<ItemGroup>
+		<None Remove="www\LinkShortener.html" />
+	</ItemGroup>
+	<ItemGroup>
+		<Content Include="www\LinkShortener.html">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.14.0-beta5" />
+		<PackageReference Include="Microsoft.Azure.Functions.Extensions" Version="1.0.0" />
+		<PackageReference Include="Microsoft.Azure.WebJobs.Extensions.CosmosDB" Version="3.0.5" />
+		<PackageReference Include="Microsoft.Azure.WebJobs.Extensions.Storage" Version="3.0.10" />
+		<PackageReference Include="Microsoft.NET.Sdk.Functions" Version="3.0.6" />
+		<PackageReference Include="UAParser" Version="3.1.44" />
+		<PackageReference Include="Microsoft.NET.Sdk.Functions" Version="3.0.1" />
+		<PackageReference Include="TweetinviAPI" Version="4.0.3" />
+	</ItemGroup>
+	<ItemGroup>
+		<None Update="host.json">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="local.settings.json">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<CopyToPublishDirectory>Never</CopyToPublishDirectory>
+		</None>
+		<None Update="proxies.json">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
+</Project>
