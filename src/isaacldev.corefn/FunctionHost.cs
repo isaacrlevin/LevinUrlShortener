@@ -48,13 +48,13 @@ namespace isaacldev.corefn
         public readonly string TwitterConsumerKey = Environment.GetEnvironmentVariable(Utility.TWITTER_CONSUMER_KEY);
 
         public readonly string TwitterConsumerSecret = Environment.GetEnvironmentVariable(Utility.TWITTER_CONSUMER_SECRET) ??
-            "http://isaacl.dev/";
+            "";
 
         public readonly string TwitterAccessToken = Environment.GetEnvironmentVariable(Utility.TWITTER_ACCESS_TOKEN) ??
-            "http://isaacl.dev/";
+            "";
 
         public readonly string TwitterAccessSecret = Environment.GetEnvironmentVariable(Utility.TWITTER_ACCESS_SECRET) ??
-            "http://isaacl.dev/";
+            "";
 
 
 
@@ -250,13 +250,25 @@ namespace isaacldev.corefn
             }
         }
 
+        [FunctionName(name: "HomeRedirect")]
+        public async Task<HttpResponseMessage> HomeRedirect([HttpTrigger(AuthorizationLevel.Anonymous, "get", "post",
+            Route = "UrlRedirect/")]HttpRequestMessage req,
+           ILogger log)
+        {
+            var redirectUrl = "https://www.isaaclevin.com/";
+
+            var response = req.CreateResponse(HttpStatusCode.Redirect);
+            response.Headers.Add("Location", redirectUrl);
+            return response;
+        }
+
         [FunctionName(name: "UrlRedirect")]
         public async Task<HttpResponseMessage> UrlRedirect([HttpTrigger(AuthorizationLevel.Anonymous, "get", "post",
             Route = "UrlRedirect/{shortUrl}")]HttpRequestMessage req,
-            [Table(tableName: Utility.TABLE)] CloudTable inputTable,
-            string shortUrl,
-            [Queue(queueName: Utility.QUEUE)] IAsyncCollector<string> queue,
-            ILogger log)
+        [Table(tableName: Utility.TABLE)] CloudTable inputTable,
+        string shortUrl,
+        [Queue(queueName: Utility.QUEUE)] IAsyncCollector<string> queue,
+        ILogger log)
         {
             log.LogInformation($"C# HTTP trigger function processed a request for shortUrl {shortUrl}");
 
