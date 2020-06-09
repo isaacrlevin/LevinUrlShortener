@@ -17,6 +17,8 @@ namespace isaacldev.domain
 
         public string Campaign { get; set; }
 
+        public string ShortCode { get; set; }
+
         public string[] Mediums { get; set; }
 
         public string Input { get; set; }

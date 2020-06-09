@@ -179,7 +179,7 @@ namespace isaacldev.corefn
                 var host = req.RequestUri.GetLeftPart(UriPartial.Authority);
 
                 // strategy for getting a new code 
-                string getCode() => Utility.Encode(keyTable.Id++);
+                string getCode() => Utility.Encode(keyTable.Id++, input.ShortCode);
 
                 // strategy for logging 
                 void logFn(string msg) => log.LogInformation(msg);

@@ -41,18 +41,25 @@ namespace isaacldev.domain
 
         private static readonly int Base = Alphabet.Length;
 
-        public static string Encode(int i)
+        public static string Encode(int i, string shortCode)
         {
-            if (i == 0)
-                return Alphabet[0].ToString();
-            var s = string.Empty;
-            while (i > 0)
+            if (string.IsNullOrEmpty(shortCode))
             {
-                s += Alphabet[i % Base];
-                i = i / Base;
-            }
+                if (i == 0)
+                    return Alphabet[0].ToString();
+                var s = string.Empty;
+                while (i > 0)
+                {
+                    s += Alphabet[i % Base];
+                    i = i / Base;
+                }
 
-            return string.Join(string.Empty, s.Reverse());
+                return string.Join(string.Empty, s.Reverse());
+            }
+            else
+            {
+                return string.Join(string.Empty, shortCode);
+            }
         }
 
         public static string AsPartitionKey(this string code)

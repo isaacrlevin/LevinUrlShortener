@@ -44,6 +44,10 @@
                     Enter Campaign:
                     <b-form-input type="text" v-model="campaign"></b-form-input>
                 </p>
+                <p>
+                    Enter ShortCode (Optional):
+                    <b-form-input type="text" v-model="shortCode"></b-form-input>
+                </p>
                 <br />
                 <b-form-checkbox v-model="tagUtm">Tag Utm?</b-form-checkbox>
                 <b-form-checkbox v-model="tagWt">Tag WT?</b-form-checkbox>
@@ -105,6 +109,7 @@
                 linkedin: true,
                 twitter: true,
                 medium: '',
+                shortCode: '',
                 campaign: "link",
                 urls: [],
                 busy: false,
@@ -131,36 +136,49 @@
                 // get the group list
                 shorten: function () {
                     var _this = this;
-                    this.busyCount++;
-                    $.ajax({
-                        type: 'POST',
-                        url: `${_this.baseUrl}?code=${_this.code}`,
-                        data: JSON.stringify({
-                            tagUtm: _this.tagUtm,
-                            title: _this.title,
-                            message: _this.message,
-                            tagWt: _this.tagWt,
-                            campaign: _this.campaign,
-                            mediums: mediums(_this),
-                            input: encodeURI(_this.url)
-                        }),
-                        contentType: 'application/json'
-                    })
-                        .done(function (data) {
-                            data.forEach(function (url) {
-                                url.ShortUrl = url.ShortUrl.replace('localhost', 'isaacl.dev').replace('levin-url-shortener.azurewebsites.net', 'isaacl.dev');
-                            });
-                            _this.urls = data;
-                            _this.url = '';
-                            _this.title = '',
-                            _this.message = ''
-                        }).fail(function (err) {
-                            _this.showAlert = true;
-                            _this.alertText = err;
-                        }).always(function () { _this.busyCount--; });
+                    var mediumList = mediums(_this);
+
+                    if (_this.shortCode != '' && mediumList.length > 1) {
+                        _this.showAlert = true;
+                        _this.alertText = 'Custom ShortCode not Allowed for Multiple Mediums';
+                        return;
+                    }
+                    else {
+
+                        this.busyCount++;
+                        $.ajax({
+                            type: 'POST',
+                            url: `${_this.baseUrl}?code=${_this.code}`,
+                            data: JSON.stringify({
+                                tagUtm: _this.tagUtm,
+                                title: _this.title,
+                                message: _this.message,
+                                tagWt: _this.tagWt,
+                                campaign: _this.campaign,
+                                shortCode: _this.shortCode,
+                                mediums: mediumList,
+                                input: encodeURI(_this.url)
+                            }),
+                            contentType: 'application/json'
+                        })
+                            .done(function (data) {
+                                data.forEach(function (url) {
+                                    url.ShortUrl = url.ShortUrl.replace('localhost', 'isaacl.dev').replace('levin-url-shortener.azurewebsites.net', 'isaacl.dev');
+                                });
+                                _this.urls = data;
+                                _this.shortCode = '';
+                                _this.url = '';
+                                _this.title = '',
+                                _this.message = '',
+                                _this.showAlert = false;
+                                _this.alertText = '';
+                            }).fail(function (err) {
+                                _this.showAlert = true;
+                                _this.alertText = err;
+                            }).always(function () { _this.busyCount--; });
+                    }
                 }
             }
-
         });
     </script>
 </body>
