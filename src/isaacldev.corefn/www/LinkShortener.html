@@ -52,7 +52,6 @@
                 <b-form-checkbox v-model="tagUtm">Tag Utm?</b-form-checkbox>
                 <b-form-checkbox v-model="tagWt">Tag WT?</b-form-checkbox>
                 <b-form-checkbox v-model="twitter">Twitter?</b-form-checkbox>
-                <b-form-checkbox v-model="facebook">Facebook?</b-form-checkbox>
                 <b-form-checkbox v-model="linkedin">LinkedIn?</b-form-checkbox>
                 <p>
                     Custom Medium:
@@ -62,7 +61,7 @@
                 <b-button :disabled="busy" @click="shorten">Shorten</b-button>
             </div>
         </b-card>
-        <b-card title="Shortened URLs" style="max-width: 80rem; float:left;" class="mb-2">
+        <b-card title="Shortened URLs" class="mb-2">
             <div class="card-text">
                 <div v-if="urls.length === 0">(no urls)</div>
                 <div v-if="urls.length">
@@ -83,9 +82,6 @@
             }
             if (data.linkedin) {
                 result.push("linkedin");
-            }
-            if (data.facebook) {
-                result.push("facebook");
             }
             if (data.medium && data.medium.length > 0) {
                 result.push(data.medium);
@@ -165,7 +161,10 @@
                                 data.forEach(function (url) {
                                     url.ShortUrl = url.ShortUrl.replace('localhost', 'isaacl.dev').replace('levin-url-shortener.azurewebsites.net', 'isaacl.dev');
                                 });
-                                _this.urls = data;
+                                for (var i = 0; i < data.length; i++)
+                                {
+                                    _this.urls.push(data[i]);                                
+                                }
                                 _this.shortCode = '';
                                 _this.url = '';
                                 _this.title = '',
