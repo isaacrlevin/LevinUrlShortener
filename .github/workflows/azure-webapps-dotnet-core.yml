@@ -25,7 +25,7 @@ env:
   AZURE_FUNCTIONAPP_PUBLISH_PROFILE: ${{ secrets.PUBLISH_PROFILE }}
   CONFIGURATION: Release
   DOTNET_CORE_VERSION: 3.1.x
-  PROJECT_PATH: AzureFunction
+  PROJECT_PATH: src
 
 on:
   push:
