@@ -166,7 +166,7 @@ namespace isaacldev.corefn
 
                 await tableOut.CreateIfNotExistsAsync();
 
-                if (keyTable != null)
+                if (keyTable == null)
                 {
                     keyTable = new NextId
                     {
