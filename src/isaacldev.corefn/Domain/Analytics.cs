@@ -1,4 +1,4 @@
-﻿using Microsoft.WindowsAzure.Storage.Table;
+﻿using Azure.Data.Tables;
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
@@ -54,7 +54,7 @@ namespace isaacldev.domain
             string source,
             string host,
             Func<string> getCode,
-            Func<TableEntity, Task> save,
+            Func<ITableEntity, Task> save,
             Action<string> log,
             Func<string, NameValueCollection> parseQueryString
             )

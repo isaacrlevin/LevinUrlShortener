@@ -1,22 +1,21 @@
-using System;
-using System.IO;
-using System.Threading.Tasks;
+using Azure.Data.Tables;
+using isaacldev.domain;
+using Microsoft.ApplicationInsights;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Logging;
-using Microsoft.ApplicationInsights;
-using System.Net.Http;
-using System.Net;
-using isaacldev.domain;
-using System.Net.Http.Headers;
-using Microsoft.WindowsAzure.Storage.Table;
+using System;
 using System.Collections.Generic;
-using System.Web;
 using System.Dynamic;
-using Microsoft.ApplicationInsights.Extensibility;
+using System.IO;
 using System.Linq;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Http;
+using System.Net;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Threading.Tasks;
+using System.Web;
 using Tweetinvi;
 
 namespace isaacldev.corefn
@@ -121,30 +120,29 @@ namespace isaacldev.corefn
         }
 
         [FunctionName("ShortenUrl")]
-        public async Task<HttpResponseMessage> ShortenUrl(
+        public async Task<IActionResult> ShortenUrl(
        [HttpTrigger(AuthorizationLevel.Function, "post")] HttpRequestMessage req,
-       [Table(Utility.TABLE, "1", Utility.KEY, Take = 1)] NextId keyTable,
-       [Table(Utility.TABLE)] CloudTable tableOut,
+       [Table(Utility.TABLE, "1", Utility.KEY, Take = 1)] NextId keyTable,   
        ILogger log)
         {
             log.LogInformation($"C# triggered function called with req: {req}");
 
             if (req == null)
             {
-                return req.CreateResponse(HttpStatusCode.NotFound);
+                return new NotFoundResult();
             }
 
             var check = SecurityCheck(req);
             if (check != null)
             {
-                return check;
+                new ObjectResult(check);
             }
 
             ShortRequest input = await req.Content.ReadAsAsync<ShortRequest>();
 
             if (input == null)
             {
-                return req.CreateResponse(HttpStatusCode.NotFound);
+                return new NotFoundResult();
             }
 
             try
@@ -160,7 +158,15 @@ namespace isaacldev.corefn
                 var utm = analytics.TagUtm(input);
                 var wt = analytics.TagWt(input);
 
-                if (keyTable == null)
+                TableServiceClient tableServiceClient = new TableServiceClient(Environment.GetEnvironmentVariable("AzureWebJobsStorage"));
+
+                TableClient tableOut = tableServiceClient.GetTableClient(
+                    tableName: Utility.TABLE
+                    );
+
+                await tableOut.CreateIfNotExistsAsync();
+
+                if (keyTable != null)
                 {
                     keyTable = new NextId
                     {
@@ -168,8 +174,7 @@ namespace isaacldev.corefn
                         RowKey = "KEY",
                         Id = 1024
                     };
-                    var keyAdd = TableOperation.Insert(keyTable);
-                    await tableOut.ExecuteAsync(keyAdd);
+                    await tableOut.AddEntityAsync<NextId>(keyTable);
                 }
 
                 log.LogInformation($"URL: {url} Tag UTM? {utm} Tag WebTrends? {wt}");
@@ -187,19 +192,17 @@ namespace isaacldev.corefn
                 // strategy to save the key 
                 async Task saveKeyAsync()
                 {
-                    var operation = TableOperation.Replace(keyTable);
-                    await tableOut.ExecuteAsync(operation);
+                    await tableOut.UpdateEntityAsync(keyTable, Azure.ETag.All, TableUpdateMode.Replace);
                 }
 
                 // strategy to insert the new short url entry
-                async Task saveEntryAsync(TableEntity entry)
+                async Task saveEntryAsync(ITableEntity entry)
                 {
-                    var operation = TableOperation.Insert(entry);
-                    var operationResult = await tableOut.ExecuteAsync(operation);
+                    var operationResult = await tableOut.AddEntityAsync(entry);
                 }
 
                 // strategy to create a new URL and track the dependencies
-                async Task saveWithTelemetryAsync(TableEntity entry)
+                async Task saveWithTelemetryAsync(ITableEntity entry)
                 {
                     await TrackDependencyAsync(
                         "AzureTableStorageInsert",
@@ -241,12 +244,12 @@ namespace isaacldev.corefn
                 }
 
                 log.LogInformation($"Done.");
-                return req.CreateResponse(HttpStatusCode.OK, result);
+                return new OkObjectResult(result);
             }
             catch (Exception ex)
             {
                 log.LogError(ex, "An unexpected error was encountered.");
-                return req.CreateErrorResponse(HttpStatusCode.BadRequest, ex);
+                return new BadRequestObjectResult(ex);
             }
         }
 
@@ -265,7 +268,6 @@ namespace isaacldev.corefn
         [FunctionName(name: "UrlRedirect")]
         public async Task<HttpResponseMessage> UrlRedirect([HttpTrigger(AuthorizationLevel.Anonymous, "get", "post",
             Route = "UrlRedirect/{shortUrl}")]HttpRequestMessage req,
-        [Table(tableName: Utility.TABLE)] CloudTable inputTable,
         string shortUrl,
         [Queue(queueName: Utility.QUEUE)] IAsyncCollector<string> queue,
         ILogger log)
@@ -294,16 +296,27 @@ namespace isaacldev.corefn
 
                 log.LogInformation($"Searching for partition key {partitionKey} and row {shortUrl}.");
 
-                TableResult result = null;
+
+                TableServiceClient tableServiceClient = new TableServiceClient(Environment.GetEnvironmentVariable("AzureWebJobsStorage"));
+
+                TableClient inputTable = tableServiceClient.GetTableClient(
+                    tableName: Utility.TABLE
+                    );
+
+                await inputTable.CreateIfNotExistsAsync();
+
+                ShortUrl result = null;
 
                 await TrackDependencyAsync("AzureTableStorage", "Retrieve", async () =>
                 {
-                    TableOperation operation = TableOperation.Retrieve<ShortUrl>(partitionKey, shortUrl);
-                    result = await inputTable.ExecuteAsync(operation);
+                    var result = await inputTable.GetEntityAsync<ShortUrl>(
+                        rowKey: shortUrl,
+                        partitionKey: partitionKey
+                        );
                 },
-                () => result != null && result.Result != null);
+                () => result != null && result != null);
 
-                if (result.Result is ShortUrl fullUrl)
+                if (result is ShortUrl fullUrl)
                 {
                     log.LogInformation($"Found it: {fullUrl.Url}");
                     redirectUrl = WebUtility.UrlDecode(fullUrl.Url);
@@ -462,7 +475,6 @@ namespace isaacldev.corefn
         [FunctionName("TweetScheduler")]
         public async Task<IActionResult> TweetScheduler(
     [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)] HttpRequest req,
-     [Table(tableName: Utility.TABLE)] CloudTable inputTable,
     ILogger log)
         {
             string shortUrl = req.Query["shortUrl"];
@@ -474,26 +486,32 @@ namespace isaacldev.corefn
                 var partitionKey = shortUrl.First().ToString();
 
                 log.LogInformation($"Searching for partition key {partitionKey} and row {shortUrl}.");
-                //CloudTable table = await CreateTableAsync("urls");
 
-                TableResult result = null;
+                TableServiceClient tableServiceClient = new TableServiceClient(Environment.GetEnvironmentVariable("AzureWebJobsStorage"));
+
+                TableClient inputTable = tableServiceClient.GetTableClient(
+                    tableName: Utility.TABLE
+                    );
+
+                await inputTable.CreateIfNotExistsAsync();
+
+                ShortUrl result = null;
 
                 await TrackDependencyAsync("AzureTableStorage", "Retrieve", async () =>
                 {
-                    TableOperation operation = TableOperation.Retrieve<ShortUrl>(partitionKey, shortUrl);
-                    result = await inputTable.ExecuteAsync(operation);
+                    var result = await inputTable.GetEntityAsync<ShortUrl>(
+                        rowKey: shortUrl,
+                        partitionKey: partitionKey
+                        );
                 },
-                () => result != null && result.Result != null);
+                () => result != null && result != null);
 
-                ShortUrl linkInfo = result.Result as ShortUrl;
+                ShortUrl linkInfo = result as ShortUrl;
 
                 if (linkInfo != null && !linkInfo.Posted)
                 {
-                    // Set up your credentials (https://apps.twitter.com)
-                    Auth.SetUserCredentials(TwitterConsumerKey, TwitterConsumerSecret, TwitterAccessToken, TwitterAccessSecret);
-
-                    // Publish the Tweet "Hello World" on your Timeline
-                    Tweet.PublishTweet($"{linkInfo.Title} \n {linkInfo.Message} \n\n {ShortenerBase}{linkInfo.RowKey}");
+                    var userClient = new TwitterClient(TwitterConsumerKey, TwitterConsumerSecret, TwitterAccessToken, TwitterAccessSecret);
+                    await userClient.Tweets.PublishTweetAsync($"{linkInfo.Title} \n {linkInfo.Message} \n\n {ShortenerBase}{linkInfo.RowKey}");
                 }
             }
             return new OkObjectResult("");

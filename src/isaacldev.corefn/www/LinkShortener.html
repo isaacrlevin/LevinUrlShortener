@@ -66,7 +66,7 @@
                 <div v-if="urls.length === 0">(no urls)</div>
                 <div v-if="urls.length">
                     <div style="max-height: 400px; overflow-y: scroll;">
-                        <p v-for="url in urls"><strong>{{url.ShortUrl}}</strong> | {{url.LongUrl}}</p>
+                        <p v-for="url in urls"><strong>{{url.shortUrl}}</strong> | {{url.longUrl}}</p>
                     </div>
                 </div>
             </div>
@@ -159,7 +159,7 @@
                         })
                             .done(function (data) {
                                 data.forEach(function (url) {
-                                    url.ShortUrl = url.ShortUrl.replace('localhost', 'isaacl.dev').replace('levin-url-shortener.azurewebsites.net', 'isaacl.dev');
+                                    url.shortUrl = url.shortUrl.replace('localhost', 'isaacl.dev').replace('levin-url-shortener.azurewebsites.net', 'isaacl.dev');
                                 });
                                 for (var i = 0; i < data.length; i++)
                                 {
