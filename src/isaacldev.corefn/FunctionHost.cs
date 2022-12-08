@@ -309,7 +309,7 @@ namespace isaacldev.corefn
 
                 await TrackDependencyAsync("AzureTableStorage", "Retrieve", async () =>
                 {
-                    var result = await inputTable.GetEntityAsync<ShortUrl>(
+                    result = await inputTable.GetEntityAsync<ShortUrl>(
                         rowKey: shortUrl,
                         partitionKey: partitionKey
                         );
@@ -348,7 +348,7 @@ namespace isaacldev.corefn
 
         [FunctionName("ProcessQueue")]
         public void ProcessQueue([QueueTrigger(queueName: Utility.QUEUE)] string request,
-            [CosmosDB(Utility.URL_TRACKING, Utility.URL_STATS, CreateIfNotExists = true, ConnectionStringSetting = "CosmosDb")] out dynamic doc,
+            [CosmosDB(Utility.URL_TRACKING, Utility.URL_STATS, CreateIfNotExists = true, Connection = "CosmosDb")] out dynamic doc,
             ILogger log)
         {
             try
@@ -450,7 +450,7 @@ namespace isaacldev.corefn
         [FunctionName(name: "UpdateTwitter")]
         public async Task<HttpResponseMessage> Twitter([HttpTrigger(AuthorizationLevel.Function, "post",
             Route = "UpdateTwitter/{id}")]HttpRequestMessage req,
-            [CosmosDB(Utility.URL_TRACKING, Utility.URL_STATS, CreateIfNotExists = false, ConnectionStringSetting = "CosmosDb", Id = "{id}")] dynamic doc,
+            [CosmosDB(Utility.URL_TRACKING, Utility.URL_STATS, CreateIfNotExists = false, Connection = "CosmosDb", Id = "{id}")] dynamic doc,
             string id,
             ILogger log)
         {
