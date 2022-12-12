@@ -122,7 +122,7 @@ namespace isaacldev.corefn
         [FunctionName("ShortenUrl")]
         public async Task<IActionResult> ShortenUrl(
        [HttpTrigger(AuthorizationLevel.Function, "post")] HttpRequestMessage req,
-       [Table(Utility.TABLE, "1", Utility.KEY, Take = 1)] NextId keyTable,   
+       [Table(Utility.TABLE, "1", Utility.KEY, Take = 1)] NextId keyTable,
        ILogger log)
         {
             log.LogInformation($"C# triggered function called with req: {req}");
@@ -194,7 +194,6 @@ namespace isaacldev.corefn
                 {
                     await tableOut.UpdateEntityAsync(keyTable, Azure.ETag.All, TableUpdateMode.Replace);
                 }
-
                 // strategy to insert the new short url entry
                 async Task saveEntryAsync(ITableEntity entry)
                 {
@@ -209,11 +208,12 @@ namespace isaacldev.corefn
                         "Insert",
                         async () => await saveEntryAsync(entry),
                         () => true);
-                    await TrackDependencyAsync(
-                        "AzureTableStorageUpdate",
-                        "Update",
-                        async () => await saveKeyAsync(),
-                        () => true);
+
+                    //await TrackDependencyAsync(
+                    //    "AzureTableStorageUpdate",
+                    //    "Update",
+                    //    async () => await saveKeyAsync(),
+                    //    () => true);
                 }
 
                 if (tagMediums)
