@@ -499,7 +499,7 @@ namespace isaacldev.corefn
 
                 await TrackDependencyAsync("AzureTableStorage", "Retrieve", async () =>
                 {
-                    var result = await inputTable.GetEntityAsync<ShortUrl>(
+                    result = await inputTable.GetEntityAsync<ShortUrl>(
                         rowKey: shortUrl,
                         partitionKey: partitionKey
                         );
