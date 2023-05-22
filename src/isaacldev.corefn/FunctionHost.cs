@@ -168,8 +168,17 @@ namespace isaacldev.corefn
                     tableName: Utility.TABLE
                     );
 
-                await tableOut.CreateIfNotExistsAsync();
-
+                try
+                {
+                    await tableOut.CreateIfNotExistsAsync();
+                }
+                catch (Azure.RequestFailedException ex)
+                {
+                    if (!ex.Message.Contains("409"))
+                    {
+                        throw;
+                    }
+                }
                 if (keyTable == null)
                 {
                     keyTable = new NextId
@@ -307,7 +316,17 @@ namespace isaacldev.corefn
                     tableName: Utility.TABLE
                     );
 
-                await inputTable.CreateIfNotExistsAsync();
+                try
+                {
+                    await inputTable.CreateIfNotExistsAsync();
+                }
+                catch (Azure.RequestFailedException ex)
+                {
+                    if (!ex.Message.Contains("409"))
+                    {
+                        throw;
+                    }
+                }
 
                 ShortUrl result = null;
 
@@ -497,7 +516,17 @@ namespace isaacldev.corefn
                     tableName: Utility.TABLE
                     );
 
-                await inputTable.CreateIfNotExistsAsync();
+                try
+                {
+                    await inputTable.CreateIfNotExistsAsync();
+                }
+                catch (Azure.RequestFailedException ex)
+                {
+                    if (!ex.Message.Contains("409"))
+                    {
+                        throw ex;
+                    }
+                }
 
                 ShortUrl result = null;
 
