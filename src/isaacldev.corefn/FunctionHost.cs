@@ -1,5 +1,6 @@
 using Azure.Data.Tables;
 using isaacldev.domain;
+using Mastonet;
 using Microsoft.ApplicationInsights;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -54,6 +55,9 @@ namespace isaacldev.corefn
 
         public readonly string TwitterAccessSecret = Environment.GetEnvironmentVariable(Utility.TWITTER_ACCESS_SECRET) ??
             "";
+
+        public readonly string MastodonAccessToken = Environment.GetEnvironmentVariable(Utility.MASTODON_ACCESS_TOKEN) ??
+    "";
 
 
 
@@ -512,6 +516,9 @@ namespace isaacldev.corefn
                 {
                     var userClient = new TwitterClient(TwitterConsumerKey, TwitterConsumerSecret, TwitterAccessToken, TwitterAccessSecret);
                     await userClient.Tweets.PublishTweetAsync($"{linkInfo.Title} \n {linkInfo.Message} \n\n {ShortenerBase}{linkInfo.RowKey}");
+
+                    var massClient = new Mastonet.MastodonClient("fosstodon.org", MastodonAccessToken);
+                    await massClient.PublishStatus($"{linkInfo.Title} \n {linkInfo.Message.Replace("@", "#")} \n\n {ShortenerBase}{linkInfo.RowKey}", Visibility.Public);
                 }
             }
             return new OkObjectResult("");

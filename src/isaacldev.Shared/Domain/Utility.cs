@@ -28,6 +28,7 @@ namespace isaacldev.domain
         public const string TWITTER_CONSUMER_SECRET = "TwitterConsumerSecret";
         public const string TWITTER_ACCESS_TOKEN = "TwitterAccessToken";
         public const string TWITTER_ACCESS_SECRET = "TwitterAccessSecret";
+        public const string MASTODON_ACCESS_TOKEN = "MastodonAccessToken";
 
         public const string TABLE = "urls";
         public const string QUEUE = "requests";
