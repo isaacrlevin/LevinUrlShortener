@@ -18,6 +18,7 @@ using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using System.Web;
 using Tweetinvi;
+using Tweetinvi.Core.Web;
 
 namespace isaacldev.corefn
 {
@@ -168,17 +169,8 @@ namespace isaacldev.corefn
                     tableName: Utility.TABLE
                     );
 
-                try
-                {
-                    await tableOut.CreateIfNotExistsAsync();
-                }
-                catch (Azure.RequestFailedException ex)
-                {
-                    if (!ex.Message.Contains("409"))
-                    {
-                        throw;
-                    }
-                }
+                await tableOut.CreateIfNotExistsAsync();
+
                 if (keyTable == null)
                 {
                     keyTable = new NextId
@@ -316,18 +308,16 @@ namespace isaacldev.corefn
                     tableName: Utility.TABLE
                     );
 
-                try
+                bool exists = false;
+                await foreach (var tbl in tableServiceClient.QueryAsync(t => t.Name == Utility.TABLE))
+                {
+                    exists = true;
+                }
+
+                if (!exists)
                 {
                     await inputTable.CreateIfNotExistsAsync();
                 }
-                catch (Azure.RequestFailedException ex)
-                {
-                    if (!ex.Message.Contains("409"))
-                    {
-                        throw;
-                    }
-                }
-
                 ShortUrl result = null;
 
                 await TrackDependencyAsync("AzureTableStorage", "Retrieve", async () =>
@@ -371,7 +361,7 @@ namespace isaacldev.corefn
 
         [FunctionName("ProcessQueue")]
         public void ProcessQueue([QueueTrigger(queueName: Utility.QUEUE)] string request,
-            [CosmosDB(Utility.URL_TRACKING, Utility.URL_STATS, CreateIfNotExists = true, Connection = "CosmosDb")] out dynamic doc,
+            [CosmosDB(Utility.URL_TRACKING, Utility.URL_STATS, CreateIfNotExists = false, Connection = "CosmosDb")] out dynamic doc,
             ILogger log)
         {
             try
@@ -516,16 +506,15 @@ namespace isaacldev.corefn
                     tableName: Utility.TABLE
                     );
 
-                try
+                bool exists = false;
+                await foreach (var tbl in tableServiceClient.QueryAsync(t => t.Name == Utility.TABLE))
+                {
+                    exists = true;
+                }
+
+                if (!exists)
                 {
                     await inputTable.CreateIfNotExistsAsync();
-                }
-                catch (Azure.RequestFailedException ex)
-                {
-                    if (!ex.Message.Contains("409"))
-                    {
-                        throw ex;
-                    }
                 }
 
                 ShortUrl result = null;
@@ -543,8 +532,29 @@ namespace isaacldev.corefn
 
                 if (linkInfo != null && !linkInfo.Posted)
                 {
-                    var userClient = new TwitterClient(TwitterConsumerKey, TwitterConsumerSecret, TwitterAccessToken, TwitterAccessSecret);
-                    await userClient.Tweets.PublishTweetAsync($"{linkInfo.Title} \n {linkInfo.Message} \n\n {ShortenerBase}{linkInfo.RowKey}");
+                    var client = new TwitterClient(
+                        TwitterConsumerKey,
+                        TwitterConsumerSecret,
+                        TwitterAccessToken,
+                        TwitterAccessSecret
+                        );
+
+                    var poster = new TweetsV2Poster(client);
+
+                    ITwitterResult tweetResult = await poster.PostTweet(
+                        new TweetV2PostRequest
+                        {
+                            Text = $"{linkInfo.Title} \n {linkInfo.Message} \n\n {ShortenerBase}{linkInfo.RowKey}"
+                        }
+                    );
+
+                    if (tweetResult.Response.IsSuccessStatusCode == false)
+                    {
+                        throw new Exception(
+                            "Error when posting tweet: " + Environment.NewLine + tweetResult.Content
+                        );
+                    }
+
 
                     var massClient = new Mastonet.MastodonClient("fosstodon.org", MastodonAccessToken);
                     await massClient.PublishStatus($"{linkInfo.Title} \n {linkInfo.Message.Replace("@", "#")} \n\n {ShortenerBase}{linkInfo.RowKey}", Visibility.Public);
