@@ -556,8 +556,8 @@ namespace isaacldev.corefn
                     }
 
 
-                    var massClient = new Mastonet.MastodonClient("fosstodon.org", MastodonAccessToken);
-                    await massClient.PublishStatus($"{linkInfo.Title} \n {linkInfo.Message.Replace("@", "#")} \n\n {ShortenerBase}{linkInfo.RowKey}", Visibility.Public);
+                    //var massClient = new Mastonet.MastodonClient("fosstodon.org", MastodonAccessToken);
+                    //await massClient.PublishStatus($"{linkInfo.Title} \n {linkInfo.Message.Replace("@", "#")} \n\n {ShortenerBase}{linkInfo.RowKey}", Visibility.Public);
                 }
             }
             return new OkObjectResult("");
