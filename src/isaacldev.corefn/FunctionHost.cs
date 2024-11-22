@@ -539,9 +539,9 @@ namespace isaacldev.corefn
 
                 if (linkInfo != null && !linkInfo.Posted)
                 {
-                    await Tweet(linkInfo);
+                    //await Tweet(linkInfo);
 
-                    await PostToBlueSky(linkInfo);
+                    //await PostToBlueSky(linkInfo);
                 }
             }
             return new OkObjectResult("");
