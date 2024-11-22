@@ -3,6 +3,7 @@
   "proxies": {
     "Domain Redirect": {
       "disabled": false,
+      "debug": true,
       "matchCondition": {
         "route": "/{*shortUrl}"
       },
@@ -10,6 +11,7 @@
     },
     "Api": {
       "disabled": false,
+      "debug": true,
       "matchCondition": {
         "route": "/api/{*path}"
       },
